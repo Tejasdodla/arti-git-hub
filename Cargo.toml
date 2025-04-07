@@ -1,0 +1,34 @@
+[package]
+name = "artigit"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = [
+    "src/storage/ipfs",
+]
+exclude = [
+    "src/network/oneshot-fused-workaround",
+    "src/network/fs-mistrust",
+    "deps/arti"
+]
+
+[workspace.lints]
+
+[dependencies]
+# Minimized to only what's absolutely needed
+# Eventually all dependencies will be embedded
+ipfs-storage = { path = "src/storage/ipfs" }
+
+# Local gitoxide crates
+gix-object = { path = "deps/gitoxide/gix-object" }
+gix-odb = { path = "deps/gitoxide/gix-odb" }
+gix-pack = { path = "deps/gitoxide/gix-pack" }
+gix-ref = { path = "deps/gitoxide/gix-ref" }
+gix-revision = { path = "deps/gitoxide/gix-revision" }
+
+# Local arti client crate
+arti-client = { path = "src/network/arti-client" }
+
+# External async runtime
+tokio = { version = "1", features = ["full"] }
