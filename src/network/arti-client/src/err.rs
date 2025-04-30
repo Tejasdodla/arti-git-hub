@@ -248,7 +248,7 @@ enum ErrorDetail {
 
     /// Hostname not valid.
     #[error("Rejecting hostname as invalid")]
-    InvalidHostname,
+    InvalidHostname(crate::address::TorAddrError),
 
     /// Address was local, and we don't permit connecting to those over Tor.
     #[error("Cannot connect to a local-only address without enabling allow_local_addrs")]
@@ -428,8 +428,8 @@ impl tor_error::HasKind for ErrorDetail {
             E::BadOnionAddress(_) => EK::InvalidStreamTarget,
             #[cfg(feature = "onion-service-service")]
             E::LaunchOnionService(e) => e.kind(),
-            // TODO Should delegate to TorAddrError EK
-            E::Address(_) | E::InvalidHostname => EK::InvalidStreamTarget,
+            E::Address(e) => e.kind(),
+            E::InvalidHostname(e) => e.kind(),
             E::LocalAddress => EK::ForbiddenStreamTarget,
             E::ChanMgrSetup(e) => e.kind(),
             E::NoDir { error, .. } => error.kind(),
@@ -459,7 +459,7 @@ impl From<TorAddrError> for ErrorDetail {
         use ErrorDetail as E;
         use TorAddrError as TAE;
         match e {
-            TAE::InvalidHostname => E::InvalidHostname,
+            TAE::InvalidHostname => E::InvalidHostname(e),
             TAE::NoPort | TAE::BadPort => E::Address(e),
         }
     }
@@ -575,6 +575,34 @@ mod test {
 
     /// This code makes sure that our errors implement all the traits we want.
     #[test]
+#[test]
+    fn test_error_kind_mapping() {
+        use crate::TorAddrError;
+        use tor_error::ErrorKind;
+
+        // Test TorAddrError mappings
+        let err_invalid_hostname = ErrorDetail::from(TorAddrError::InvalidHostname);
+        assert_eq!(err_invalid_hostname.kind(), ErrorKind::InvalidStreamTarget);
+        assert_eq!(Error::from(err_invalid_hostname).kind(), ErrorKind::InvalidStreamTarget);
+
+        let err_no_port = ErrorDetail::from(TorAddrError::NoPort);
+        assert_eq!(err_no_port.kind(), ErrorKind::InvalidStreamTarget);
+        assert_eq!(Error::from(err_no_port).kind(), ErrorKind::InvalidStreamTarget);
+
+        let err_bad_port = ErrorDetail::from(TorAddrError::BadPort);
+        assert_eq!(err_bad_port.kind(), ErrorKind::InvalidStreamTarget);
+        assert_eq!(Error::from(err_bad_port).kind(), ErrorKind::InvalidStreamTarget);
+
+        // Test a few other ErrorDetail variants for good measure
+        assert_eq!(ErrorDetail::ExitTimeout.kind(), ErrorKind::RemoteNetworkTimeout);
+        assert_eq!(Error::from(ErrorDetail::ExitTimeout).kind(), ErrorKind::RemoteNetworkTimeout);
+
+        assert_eq!(ErrorDetail::OnionAddressNotSupported.kind(), ErrorKind::FeatureDisabled);
+        assert_eq!(Error::from(ErrorDetail::OnionAddressNotSupported).kind(), ErrorKind::FeatureDisabled);
+
+        assert_eq!(ErrorDetail::LocalAddress.kind(), ErrorKind::ForbiddenStreamTarget);
+        assert_eq!(Error::from(ErrorDetail::LocalAddress).kind(), ErrorKind::ForbiddenStreamTarget);
+    }
     fn traits_ok() {
         // I had intended to use `assert_impl`, but that crate can't check whether
         // a type is 'static.

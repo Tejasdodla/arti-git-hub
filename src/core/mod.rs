@@ -1,5 +1,5 @@
-use gix_object::{self, ObjectId};
-use gix_odb::{self, object};
+use gix_hash::ObjectId;
+use gix_odb::pack::cache::object;
 use gix_pack;
 use gix_ref;
 use gix_revision;

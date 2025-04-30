@@ -20,11 +20,9 @@ use std::sync::{
     Arc, Mutex,
 };
 use std::task::{Context, Poll, Waker};
-
 // a counter used to assign unique identifiers to `Subscription`s and `SubscriptionFuture`s
 // (which obtain the same number as their counterpart `Subscription`)
 static GLOBAL_REQ_COUNT: AtomicU64 = AtomicU64::new(0);
-
 /// The type of a request for subscription.
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum RequestKind {

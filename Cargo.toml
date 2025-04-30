@@ -15,20 +15,117 @@ exclude = [
 
 [workspace.lints]
 
+[features]
+testing = []
+vanguards = []
+
 [dependencies]
 # Minimized to only what's absolutely needed
 # Eventually all dependencies will be embedded
 ipfs-storage = { path = "src/storage/ipfs" }
 
 # Local gitoxide crates
-gix-object = { path = "deps/gitoxide/gix-object" }
-gix-odb = { path = "deps/gitoxide/gix-odb" }
-gix-pack = { path = "deps/gitoxide/gix-pack" }
-gix-ref = { path = "deps/gitoxide/gix-ref" }
-gix-revision = { path = "deps/gitoxide/gix-revision" }
+gix-object = { path = "src/core/gix-object" }
+gix-odb = { path = "src/core/gix-odb" }
+gix-pack = { path = "src/core/gix-pack" }
+gix-ref = { path = "src/core/gix-ref" }
+gix-revision = { path = "src/core/gix-revision" }
+gix-config-value = { path = "src/core/gix-config-value" }
+gix-pathspec = { path = "src/core/gix-pathspec" }
+gix-lock = { path = "src/core/gix-lock" }
+gix-bitmap = { path = "src/core/gix-bitmap" }
+gix-index = { path = "src/core/gix-index" }
+gix-ignore = { path = "src/core/gix-ignore" }
+gix-worktree = { path = "src/core/gix-worktree" }
+gix-packetline-blocking = { path = "src/core/gix-packetline-blocking" }
+gix-tempfile = { path = "src/core/gix-tempfile" }
+gix-revwalk = { path = "src/core/gix-revwalk" }
+gix-commitgraph = { path = "src/core/gix-commitgraph" }
+gix-traverse = { path = "src/core/gix-traverse" }
+gix-filter = { path = "src/core/gix-filter" }
+gix-command = { path = "src/core/gix-command" }
+gix-quote = { path = "src/core/gix-quote" }
+gix-glob = { path = "src/core/gix-glob" }
+gix-attributes = { path = "src/core/gix-attributes" }
+gix-diff = { path = "src/core/gix-diff" }
+gix-chunk = { path = "src/core/gix-chunk" }
+gix-fs = { path = "src/core/gix-fs" }
+gix-hashtable = { path = "src/core/gix-hashtable" }
+gix-utils = { path = "src/core/gix-utils" }
+gix-testtools = { path = "src/core/tests/tools" }
+gix-validate = { path = "src/core/gix-validate" }
+gix-trace = { path = "src/core/gix-trace" }
+gix-path = { path = "src/core/gix-path" }
+gix-features = { path = "src/core/gix-features" }
+gix-hash = { path = "src/core/gix-hash" }
+gix-date = { path = "src/core/gix-date" }
+gix-actor = { path = "src/core/gix-actor" }
 
 # Local arti client crate
-arti-client = { path = "src/network/arti-client" }
+arti-client = { path = "src/network/arti-client", features = ["testing", "vanguards"] }
 
 # External async runtime
 tokio = { version = "1", features = ["full"] }
+tor-rtcompat = { path = "src/network/tor-rtcompat" }
+clap = { version = "4.0", features = ["derive"] }
+
+# Dependencies with features enabled explicitly 
+tor-circmgr = { path = "src/network/tor-circmgr", features = ["testing", "vanguards"] }
+tor-guardmgr = { path = "src/network/tor-guardmgr", features = ["vanguards"] }
+tor-netdir = { path = "src/network/tor-netdir", features = ["testing"] }
+
+# Patch dependencies to use local copies in src/network
+[patch.crates-io]
+tor-basic-utils = { path = "src/network/tor-basic-utils" }
+tor-chanmgr = { path = "src/network/tor-chanmgr" }
+tor-circmgr = { path = "src/network/tor-circmgr" }
+tor-config = { path = "src/network/tor-config" }
+tor-config-path = { path = "src/network/tor-config-path" }
+tor-dirmgr = { path = "src/network/tor-dirmgr" }
+tor-geoip = { path = "src/network/tor-geoip" }
+tor-guardmgr = { path = "src/network/tor-guardmgr" }
+tor-hsclient = { path = "src/network/tor-hsclient" }
+tor-hscrypto = { path = "src/network/tor-hscrypto" }
+tor-hsservice = { path = "src/network/tor-hsservice" }
+tor-keymgr = { path = "src/network/tor-keymgr" }
+tor-linkspec = { path = "src/network/tor-linkspec" }
+tor-llcrypto = { path = "src/network/tor-llcrypto" }
+tor-memquota = { path = "src/network/tor-memquota" }
+tor-netdir = { path = "src/network/tor-netdir" }
+tor-netdoc = { path = "src/network/tor-netdoc" }
+tor-persist = { path = "src/network/tor-persist" }
+tor-proto = { path = "src/network/tor-proto" }
+tor-ptmgr = { path = "src/network/tor-ptmgr" }
+tor-rpcbase = { path = "src/network/tor-rpcbase" }
+tor-rtcompat = { path = "src/network/tor-rtcompat" }
+caret = { path = "src/network/caret" }
+tor-cell = { path = "src/network/tor-cell" }
+tor-bytes = { path = "src/network/tor-bytes" }
+slotmap-careful = { path = "src/network/slotmap-careful" }
+test-temp-dir = { path = "src/network/test-temp-dir" }
+tor-log-ratelim = { path = "src/network/tor-log-ratelim" }
+tor-rtmock = { path = "src/network/tor-rtmock" }
+tor-cert = { path = "src/network/tor-cert" }
+tor-checkable = { path = "src/network/tor-checkable" }
+equix = { path = "src/network/equix" }
+hashx = { path = "src/network/hashx" }
+tor-key-forge = { path = "src/network/tor-key-forge" }
+tor-units = { path = "src/network/tor-units" }
+tor-protover = { path = "src/network/tor-protover" }
+tor-socksproto = { path = "src/network/tor-socksproto" }
+fslock-guard = { path = "src/network/fslock-guard" }
+tor-relay-selection = { path = "src/network/tor-relay-selection" }
+tor-consdiff = { path = "src/network/tor-consdiff" }
+tor-dirclient = { path = "src/network/tor-dirclient" }
+
+[[test]]
+name = "unit"
+path = "tests/unit/mod.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"
+
+[[test]]
+name = "e2e"
+path = "tests/e2e/mod.rs"

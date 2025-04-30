@@ -156,30 +156,31 @@ safelog = { path = "../safelog", version = "0.4.5" }
 serde = { version = "1.0.103", features = ["derive"] }
 thiserror = "2"
 tor-async-utils = { path = "../tor-async-utils", version = "0.29.0" }
-tor-basic-utils = { path = "../../../deps/arti/crates/tor-basic-utils", version = "0.29.0" }
-tor-chanmgr = { path = "../../../deps/arti/crates/tor-chanmgr", version = "0.29.0" }
-tor-circmgr = { path = "../../../deps/arti/crates/tor-circmgr", version = "0.29.0" }
-tor-config = { path = "../../../deps/arti/crates/tor-config", version = "0.29.0" }
-tor-config-path = { path = "../../../deps/arti/crates/tor-config-path", version = "0.29.0", features = ["arti-client"] }
-tor-dirmgr = { path = "../../../deps/arti/crates/tor-dirmgr", version = "0.29.0", default-features = false, features = ["mmap"] }
+tor-basic-utils = { path = "../tor-basic-utils", version = "0.29.0" }
+tor-chanmgr = { path = "../tor-chanmgr", version = "0.29.0" }
+tor-circmgr = { path = "../tor-circmgr", version = "0.29.0" }
+tor-config = { path = "../tor-config", version = "0.29.0" }
+tor-config-path = { path = "../tor-config-path", version = "0.29.0", features = ["arti-client"] }
+tor-dirmgr = { path = "../tor-dirmgr", version = "0.29.0", default-features = false, features = ["mmap"] }
+tor-general-addr = { path = "../tor-general-addr", version = "0.29.0" }
 tor-error = { path = "../tor-error", version = "0.29.0", features = ["tracing"] }
-tor-geoip = { path = "../../../deps/arti/crates/tor-geoip", version = "0.29.0", optional = true }
-tor-guardmgr = { path = "../../../deps/arti/crates/tor-guardmgr", version = "0.29.0" }
-tor-hsclient = { path = "../../../deps/arti/crates/tor-hsclient", version = "0.29.0", optional = true }
-tor-hscrypto = { path = "../../../deps/arti/crates/tor-hscrypto", version = "0.29.0", optional = true }
-tor-hsservice = { path = "../../../deps/arti/crates/tor-hsservice", version = "0.29.0", optional = true }
-tor-keymgr = { path = "../../../deps/arti/crates/tor-keymgr", version = "0.29.0", default-features = false }
-tor-linkspec = { path = "../../../deps/arti/crates/tor-linkspec", version = "0.29.0" }
-tor-llcrypto = { path = "../../../deps/arti/crates/tor-llcrypto", version = "0.29.0" }
+tor-geoip = { path = "../tor-geoip", version = "0.29.0", optional = true }
+tor-guardmgr = { path = "../tor-guardmgr", version = "0.29.0" }
+tor-hsclient = { path = "../tor-hsclient", version = "0.29.0", optional = true }
+tor-hscrypto = { path = "../tor-hscrypto", version = "0.29.0", optional = true }
+tor-hsservice = { path = "../tor-hsservice", version = "0.29.0", optional = true }
+tor-keymgr = { path = "../tor-keymgr", version = "0.29.0", default-features = false }
+tor-linkspec = { path = "../tor-linkspec", version = "0.29.0" }
+tor-llcrypto = { path = "../tor-llcrypto", version = "0.29.0" }
 # tor-memquota dependency is unconditional, but most of the code is behind tor-memquota/memquota
-tor-memquota = { path = "../../../deps/arti/crates/tor-memquota", version = "0.29.0", default-features = false }
-tor-netdir = { path = "../../../deps/arti/crates/tor-netdir", version = "0.29.0" }
-tor-netdoc = { path = "../../../deps/arti/crates/tor-netdoc", version = "0.29.0" }
-tor-persist = { path = "../../../deps/arti/crates/tor-persist", version = "0.29.0" }
-tor-proto = { path = "../../../deps/arti/crates/tor-proto", version = "0.29.0" }
-tor-ptmgr = { path = "../../../deps/arti/crates/tor-ptmgr", version = "0.29.0", optional = true }
-tor-rpcbase = { path = "../../../deps/arti/crates/tor-rpcbase", version = "0.29.0", optional = true }
-tor-rtcompat = { path = "../../../deps/arti/crates/tor-rtcompat", version = "0.29.0", features = ["tokio", "native-tls"] }
+tor-memquota = { path = "../tor-memquota", version = "0.29.0", default-features = false }
+tor-netdir = { path = "../tor-netdir", version = "0.29.0" }
+tor-netdoc = { path = "../tor-netdoc", version = "0.29.0" }
+tor-persist = { path = "../tor-persist", version = "0.29.0" }
+tor-proto = { path = "../tor-proto", version = "0.29.0" }
+tor-ptmgr = { path = "../tor-ptmgr", version = "0.29.0", optional = true }
+tor-rpcbase = { path = "../tor-rpcbase", version = "0.29.0", optional = true }
+tor-rtcompat = { path = "../tor-rtcompat", version = "0.29.0", features = ["tokio", "native-tls"] }
 tracing = "0.1.36"
 visibility = { version = "0.1.0", optional = true }
 void = "1"
@@ -198,7 +199,7 @@ tokio-crate = { package = "tokio", version = "1.7", features = [
     "macros",
 ] }
 toml = "0.8.8"
-tor-relay-selection = { path = "../../../deps/arti/crates/tor-relay-selection", version = "0.29.0" }
+tor-relay-selection = { path = "../tor-relay-selection", version = "0.29.0" }
 tracing-subscriber = "0.3.0"
 
 [package.metadata.docs.rs]

@@ -1,5 +1,5 @@
-//! Types and traits for converting objects to addresses which
-//! Tor can connect to.
+/// Types and traits for converting objects to addresses which
+/// Tor can connect to.
 
 use crate::err::ErrorDetail;
 use crate::StreamPrefs;
@@ -8,6 +8,8 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV
 use std::str::FromStr;
 use thiserror::Error;
 use tor_basic_utils::StrExt;
+use tor_error::HasKind;
+use tor_error::ErrorKind;
 
 #[cfg(feature = "onion-service-client")]
 use tor_hscrypto::pk::{HsId, HSID_ONION_SUFFIX};
@@ -310,7 +312,7 @@ impl TorAddr {
         if let Host::Hostname(addr) = &self.host {
             if !is_valid_hostname(addr) {
                 // This ought not to occur, because it violates Host's invariant
-                return Err(ErrorDetail::InvalidHostname);
+                return Err(ErrorDetail::InvalidHostname(TorAddrError::InvalidHostname));
             }
             if addr.ends_with_ignore_ascii_case(HSID_ONION_SUFFIX) {
                 // This ought not to occur, because it violates Host's invariant
@@ -349,7 +351,6 @@ impl std::fmt::Display for TorAddr {
 // to it, or expose lower-level errors in it, without careful consideration!
 #[derive(Debug, Error, Clone, Eq, PartialEq)]
 #[non_exhaustive]
-// TODO Should implement ErrorKind
 pub enum TorAddrError {
     /// Tried to parse a string that can never be interpreted as a valid host.
     #[error("String can never be a valid hostname")]
@@ -360,6 +361,12 @@ pub enum TorAddrError {
     /// Tried to parse a port that wasn't a valid nonzero `u16`.
     #[error("Could not parse port")]
     BadPort,
+}
+
+impl HasKind for TorAddrError {
+    fn kind(&self) -> ErrorKind {
+        ErrorKind::InvalidStreamTarget
+    }
 }
 
 /// A host that Tor can connect to: either a hostname or an IP address.
@@ -630,7 +637,7 @@ mod test {
 
         assert!(matches!(
             val("-foobar.net:443"),
-            Err(ErrorDetail::InvalidHostname)
+            Err(ErrorDetail::InvalidHostname(_))
         ));
         assert!(matches!(
             val("www.torproject.org"),
@@ -643,7 +650,7 @@ mod test {
         ));
         assert!(matches!(
             val(TorAddr::new(Host::Hostname("foo@bar".to_owned()), 553).unwrap()),
-            Err(ErrorDetail::InvalidHostname)
+            Err(ErrorDetail::InvalidHostname(_))
         ));
         assert!(matches!(
             val(TorAddr::new(Host::Hostname("foo.onion".to_owned()), 80).unwrap()),
