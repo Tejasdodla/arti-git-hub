@@ -26,10 +26,11 @@ pub enum Command {
     Push,
     /// Pulls changes from the remote repository
     Pull,
+    /// Starts the web UI server with the backend
+    Serve {
+        /// Optional path to configuration file
+        #[arg(short, long)]
+        config: Option<PathBuf>,
+    },
     // Extend with more commands as needed
-}
-
-pub fn parse_args() -> Option<Command> {
-    let cli = Cli::parse();
-    cli.command
 }

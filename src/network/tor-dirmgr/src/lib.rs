@@ -43,8 +43,6 @@
 #![allow(clippy::needless_lifetimes)] // See arti#1765
 //! <!-- @@ end lint list maintained by maint/add_warning @@ -->
 
-use rand::SeedableRng;
-use rand::rngs::StdRng;
 
 // This clippy lint produces a false positive on `use strum`, below.
 // Attempting to apply the lint to just the use statement fails to suppress

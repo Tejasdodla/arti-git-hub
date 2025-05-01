@@ -1,0 +1,27 @@
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0]!./web_src/js/components/RepoContributors.vue?vue&type=style&index=0&id=691b21a1&scoped=true&lang=css ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+
+.main-graph[data-v-691b21a1] {
+  height: 260px;
+  padding-top: 2px;
+}
+.contributor-grid[data-v-691b21a1] {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+.contributor-grid[data-v-691b21a1] > * {
+  min-width: 0;
+}
+@media (max-width: 991.98px) {
+.contributor-grid[data-v-691b21a1] {
+    grid-template-columns: repeat(1, 1fr);
+}
+}
+.contributor-name[data-v-691b21a1] {
+  margin-bottom: 0;
+}
+
+
+/*# sourceMappingURL=contributors-graph.b43eef72.css.f5be3782.map*/

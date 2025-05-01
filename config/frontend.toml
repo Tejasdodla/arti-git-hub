@@ -1,0 +1,21 @@
+# ArtiGit-Hub Frontend Configuration
+
+# HTTP server settings
+port = 3000
+bind_address = "127.0.0.1"
+base_url = "http://localhost:3000"
+
+# Site configuration
+site_name = "ArtiGit-Hub"
+
+# Paths
+ui_path = "/home/cid/Desktop/arti-git-hub/src/frontend/forgejo-ui"
+repo_base_path = "/home/cid/Desktop/arti-git-hub/data/repositories"
+
+# HTTPS settings (optional)
+use_https = false
+# ssl_cert_path = "/path/to/cert.pem"
+# ssl_key_path = "/path/to/key.pem"
+
+# Security
+session_secret = "change-me-in-production"

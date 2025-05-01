@@ -3,7 +3,6 @@
 //! For a more information on the algorithm, see
 //! [`RetryDelay`].
 
-use rand::SeedableRng;
 use std::num::{NonZeroU32, NonZeroU8};
 use std::time::Duration;
 

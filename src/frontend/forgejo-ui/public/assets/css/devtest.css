@@ -1,0 +1,22 @@
+/*!********************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-2.use[1]!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-2.use[2]!./web_src/css/standalone/devtest.css ***!
+  \********************************************************************************************************************************************************************************/
+.button-sample-groups {
+  margin: 0; padding: 0;
+}
+
+.button-sample-groups .sample-group {
+  list-style: none; margin: 0; padding: 0;
+}
+
+.button-sample-groups .sample-group .ui.button {
+  margin-bottom: 5px;
+}
+
+h1, h2 {
+  margin: 0;
+  padding: 10px 0;
+}
+
+
+/*# sourceMappingURL=devtest.css.c933ee6b.map*/

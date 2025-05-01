@@ -1,8 +1,6 @@
 //! Declare a general purpose "document ID type" for tracking which
 //! documents we want and which we have.
 
-use rand::SeedableRng;
-use rand::rngs::StdRng;
 use std::collections::HashMap;
 use tracing::trace;
 

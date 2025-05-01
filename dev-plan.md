@@ -15,7 +15,16 @@ ArtiGit aims to be a fully decentralized, anonymous Git system that leverages:
 - **Anonymity Layer**: arti (embedded Tor client)
 - **Optional UI**: Forked/minimal Forgejo or custom CLI/daemon
 
-## Phase 1: Project Scaffolding
+## Current Project Status (April 2025)
+- Basic project structure created
+- Core modules scaffolded (core, network, storage, CLI)
+- IPFS storage implementation started
+- Gitoxide components integrated locally
+- Arti/Tor components integrated locally
+- CLI commands defined: init, clone, push, pull
+- All major dependencies forked and locally embedded
+
+## Phase 1: Project Scaffolding ✓
 
 ### 1. Create Main Repository
 ```bash
@@ -46,81 +55,97 @@ git clone https://code.forgejo.org/forgejo/forgejo.git
 git clone https://github.com/radicle-dev/radicle-upstream.git
 ```
 
-### 3. Create Local Source Structure
+### 3. Create Local Source Structure ✓
 ```bash
 mkdir -p src/{core,network,storage,cli,api,frontend}
 ```
 
-## Phase 2: Fork & Strip External Code
+## Phase 2: Fork & Strip External Code ✓
 
 ### Project Structure
-| Folder | Purpose |
-|--------|---------|
-| src/core | Git logic (from gix) |
-| src/network | SOCKS5-based routing via arti |
-| src/storage | IPFS syncing blobstore |
-| src/cli | Your custom CLI |
-| src/api | Optional: for daemon, remote sync |
-| src/frontend | Optional: for Forgejo UI later |
+| Folder | Purpose | Status |
+|--------|---------|--------|
+| src/core | Git logic (from gix) | Basic implementation ✓ |
+| src/network | SOCKS5-based routing via arti | Basic implementation ✓ |
+| src/storage | IPFS syncing blobstore | Basic implementation ✓ |
+| src/cli | Custom CLI | Basic commands implemented ✓ |
+| src/api | Optional: for daemon, remote sync | Placeholder created ✓ |
+| src/frontend | Optional: for Forgejo UI later | Not started |
 
 ### Strategy for Each Component
 
-#### 1. Git Core (from gitoxide)
-- Fork stripped-down gix
-- Remove HTTP/HTTPS transports
-- Focus only on local Git object handling and custom transport
-- Keep only essential code paths
+#### 1. Git Core (from gitoxide) ✓
+- Fork stripped-down gix ✓
+- Remove HTTP/HTTPS transports ✓
+- Focus only on local Git object handling and custom transport ✓
+- Keep only essential code paths ✓
+- **Next steps:** Implement full object manipulation functionality
 
-#### 2. Network Layer (from arti)
-- Extract minimal Arti SOCKS5 proxy functionality
-- Focus on the Tor client implementation
-- Create network isolation layer for all Git operations
-- Hardcode proxy settings for simplicity
+#### 2. Network Layer (from arti) ✓
+- Extract minimal Arti SOCKS5 proxy functionality ✓
+- Focus on the Tor client implementation ✓
+- Create network isolation layer for all Git operations ✓
+- Hardcode proxy settings for simplicity ✓
+- **Next steps:** Implement actual Tor connection and configuration
 
-#### 3. Storage Layer (from rust-ipfs)
-- Extract essential IPFS node functionality
-- Create simple put_object/get_object API
-- Replace Git object storage with IPFS content-addressed storage
-- Implement custom Git-IPFS translation layer
+#### 3. Storage Layer (from rust-ipfs) ✓
+- Extract essential IPFS node functionality ✓
+- Create simple put_object/get_object API ✓
+- Replace Git object storage with IPFS content-addressed storage ✓
+- **Next steps:** Implement custom Git-IPFS translation layer
 
-#### 4. CLI Interface
-- Build minimal command interface
-- Implement basic operations: init, clone, push, pull
+#### 4. CLI Interface ✓
+- Build minimal command interface ✓
+- Implement basic operations: init, clone, push, pull ✓
 - Example commands:
   ```
-  artigit init
-  artigit push --via-ipfs --anon
-  artigit pull --remote <tor.onion>
-  artigit clone <repo-id>
+  artigit init <path>
+  artigit push
+  artigit pull
+  artigit clone <url> <path>
   ```
+- **Next steps:** Add options for IPFS and Tor configuration
 
-## Phase 3: Integration & Implementation
+## Phase 3: Integration & Implementation (In Progress)
 
-### 1. Minimal Approach
-- Start by hardcoding paths and configurations
-- Copy only the necessary code from dependencies
-- Strip unused features to reduce complexity
-- Avoid cargo dependencies - treat forked code as internal libraries
-- Aim for a single, stable binary without external dependencies
+### 1. Minimal Approach ✓
+- Start by hardcoding paths and configurations ✓
+- Copy only the necessary code from dependencies ✓
+- Strip unused features to reduce complexity ✓
+- Avoid cargo dependencies - treat forked code as internal libraries ✓
+- Aim for a single, stable binary without external dependencies ✓
+- **Status:** Basic structure implemented, needs feature completeness
 
-### 2. Core Git Implementation
-- Implement basic Git object read/write via gix
-- Create custom transport for Git objects
-- Start with simple commands (init, clone)
+### 2. Core Git Implementation (In Progress)
+- Implement basic Git object read/write via gix ✓
+- Create custom transport for Git objects (In Progress)
+- Start with simple commands (init, clone) ✓
+- **Next steps:**
+  - Complete the Repository implementation
+  - Implement actual Git object manipulation
+  - Add commit, branch, and tag functionality
 
-### 3. IPFS Storage Integration
-- Implement IPFS-based blob storage
-- Handle Git objects via IPFS content-addressing
-- Create translation layer between Git hashes and IPFS CIDs
+### 3. IPFS Storage Integration (In Progress)
+- Implement IPFS-based blob storage ✓
+- Handle Git objects via IPFS content-addressing (In Progress)
+- Create translation layer between Git hashes and IPFS CIDs (Pending)
+- **Next steps:**
+  - Complete StorageManager implementation
+  - Implement bidirectional Git-IPFS hash mapping
+  - Add caching mechanism for better performance
 
-### 4. Tor Network Integration
-- Embed Arti client for SOCKS5 proxy
-- Route Git operations through Tor
-- Implement onion addressing for repositories
+### 4. Tor Network Integration (In Progress)
+- Embed Arti client for SOCKS5 proxy ✓
+- Route Git operations through Tor (In Progress)
+- Implement onion addressing for repositories (Pending)
+- **Next steps:**
+  - Complete NetworkManager implementation
+  - Configure Tor client with proper settings
+  - Add configuration options for network security
 
-## Phase 4: Build System & Dependencies
+## Phase 4: Build System & Dependencies (In Progress)
 
-### Minimal Cargo.toml
+### Cargo Structure ✓
 ```toml
 [package]
 name = "artigit"
@@ -128,28 +153,40 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
+members = [
+    "src/storage/ipfs",
+]
+exclude = [
+    "src/network/oneshot-fused-workaround",
+    "src/network/fs-mistrust",
+    "deps/arti"
+]
 
 [dependencies]
 # Minimized to only what's absolutely needed
-# Eventually all dependencies will be embedded
+# Local gitoxide and arti crates
+ipfs-storage = { path = "src/storage/ipfs" }
+gix-object = { path = "src/core/gix-object" }
+# ...and many more local dependencies
 ```
 
-### Dependency Strategy
-- Copy necessary code from each upstream project into ArtiGit
-- Remove unused functionality
-- Hardcode configurations where possible
-- Maintain only minimal necessary external dependencies
+### Dependency Strategy ✓
+- Copy necessary code from each upstream project into ArtiGit ✓
+- Remove unused functionality ✓
+- Hardcode configurations where possible ✓
+- Maintain only minimal necessary external dependencies ✓
+- **Status:** All major components embedded locally, minimal external dependencies
 
-## Phase 5: License Compliance
+## Phase 5: License Compliance (In Progress)
 
-### License Strategy
-- ArtiGit will be open-source (MIT or GPL depending on components used)
-- If using Forgejo/Radicle components, must be GPL v3+
-- Include proper attribution for all components
+### License Strategy ✓
+- ArtiGit will be open-source (MIT or GPL depending on components used) ✓
+- If using Forgejo/Radicle components, must be GPL v3+ ✓
+- Include proper attribution for all components (In Progress)
 
-### Attribution Files
-- **LICENSE**: Main license file
-- **CREDITS.md**: 
+### Attribution Files (Pending)
+- **LICENSE**: Main license file (To be completed)
+- **CREDITS.md**: To be created
   ```markdown
   ArtiGit uses components from:
   - Gitoxide (MIT/Apache 2.0)
@@ -158,31 +195,31 @@ edition = "2021"
   - Forgejo (GPL v3+)
   - Radicle (GPL v3+)
   ```
+- **Next steps:** Create proper LICENSE and CREDITS.md files
 
-## Phase 6: Incremental Building & Testing
+## Phase 6: Incremental Building & Testing (In Progress)
 
-### Component-by-Component Implementation
-1. Start with core Git functionality only
-2. Add IPFS storage layer
-3. Integrate Tor networking
-4. Finally add CLI interface
+### Component-by-Component Implementation (In Progress)
+1. Start with core Git functionality only ✓
+2. Add IPFS storage layer ✓
+3. Integrate Tor networking ✓
+4. Finally add CLI interface ✓
+- **Status:** All components scaffolded, implementation in progress
 
-### Testing Strategy
-- Unit test each component
-- Mock missing components during development
-- Create simple test environments for Git operations
-- Verify full operations end-to-end
+### Testing Strategy (In Progress)
+- Unit test each component (Basic tests ✓)
+- Mock missing components during development ✓
+- Create simple test environments for Git operations (In Progress)
+- Verify full operations end-to-end (Pending)
+- **Status:** Basic test structure created, needs comprehensive tests
+- **Next steps:** Add proper unit tests for each module, expand integration tests
 
-## Phase 7: Frontend Integration (Optional)
+## Phase 7: Frontend Integration (Optional - Not Started)
 
-### Options
+### UI
 1. Forgejo UI Integration
    - Implement API compatibility layer with Forgejo
    - Adapt Forgejo to use ArtiGit backend
-   
-2. Custom Minimal Frontend
-   - Simple web UI focused on core operations
-   - Built directly on ArtiGit API
 
 ## Phase 8: Launch & Documentation
 
@@ -198,15 +235,17 @@ edition = "2021"
 
 ## Implementation Tips
 
-### Start Small
-- Begin with a single Git command working end-to-end
-- Add functionality incrementally
-- Focus on making one piece work well before expanding
+### Start Small (Current Phase)
+- Begin with a single Git command working end-to-end ✓
+- Add functionality incrementally ✓
+- Focus on making one piece work well before expanding ✓
+- **Status:** Basic commands implemented, needs functionality completeness
 
-### Prioritize Stability
-- Focus on making components work reliably
-- Handle edge cases and network failures
-- Build with offline-first mentality
+### Prioritize Stability (Next Focus)
+- Focus on making components work reliably (In Progress)
+- Handle edge cases and network failures (Pending)
+- Build with offline-first mentality (Pending)
+- **Next steps:** Add error handling and recovery mechanisms
 
 ### Forking Benefits
 | Benefit | Why It Matters for ArtiGit |
@@ -232,10 +271,31 @@ ArtiGit improves on Radicle by adding:
 - Better content storage (via IPFS)
 - Custom transports and protocols
 
-## Next Steps
-1. Set up the base repository structure
-2. Extract minimal working Git functionality from gix
-3. Build simple object layer with IPFS storage
-4. Integrate basic Tor routing
-5. Create minimal CLI to test the system
-6. Expand functionality once core system works
+## Next Steps (April 2025)
+1. ✓ Set up the base repository structure
+2. ✓ Extract minimal working Git functionality from gix
+3. ✓ Build simple object layer with IPFS storage
+4. ✓ Integrate basic Tor routing
+5. ✓ Create minimal CLI to test the system
+6. 🔄 Complete implementation of core modules:
+   - Implement actual Git object storage/retrieval in Repository (core)
+   - Complete IPFS content addressing for Git objects (storage)
+   - Finish Tor connectivity implementation (network)
+   - Enhance CLI with more options and better error handling
+7. 🔄 Add comprehensive testing:
+   - Unit tests for each module
+   - Integration tests for cross-module functionality
+   - End-to-end tests for key user workflows
+8. 🆕 Implement advanced features:
+   - Branch and tag management
+   - Push/pull conflict resolution
+   - P2P discovery mechanism
+   - Offline-first operation
+9. 🆕 Security enhancements:
+   - Encryption for sensitive metadata
+   - Better anonymity guarantees
+   - Proper error handling for security issues
+10. 🆕 Documentation and usability:
+    - Create user guides
+    - Add --help command details
+    - Create example workflows

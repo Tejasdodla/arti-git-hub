@@ -16,6 +16,7 @@ use tor_guardmgr::vanguards::VanguardMgr;
 use tor_linkspec::CircTarget;
 use tor_proto::circuit::{CircParameters, ClientCirc, Path, UniqId};
 use tor_rtcompat::Runtime;
+use cfg_if::cfg_if;
 
 #[async_trait]
 impl mgr::AbstractCirc for tor_proto::circuit::ClientCirc {
@@ -82,6 +83,21 @@ impl MockablePlan for Plan {}
 impl<R: Runtime> crate::mgr::AbstractCircBuilder<R> for crate::build::CircuitBuilder<R> {
     type Circ = ClientCirc;
     type Plan = Plan;
+
+    fn vanguardmgr(&self) -> &Arc<VanguardMgr<R>> {
+        cfg_if! {
+            if #[cfg(all(feature = "vanguards", feature = "hs-common"))] {
+                // This field only exists when these features are enabled.
+                &self.vanguardmgr
+            } else {
+                // This panic is necessary because the trait demands a reference,
+                // but the field is conditionally compiled. If called without
+                // the features, we cannot fulfill the trait contract by returning
+                // a valid reference.
+                panic!("internal error: vanguardmgr() called, but vanguards feature is disabled");
+            }
+        }
+    }
 
     fn plan_circuit(
         &self,
@@ -199,11 +215,6 @@ impl<R: Runtime> crate::mgr::AbstractCircBuilder<R> for crate::build::CircuitBui
 
     fn estimator(&self) -> &timeouts::Estimator {
         CircuitBuilder::estimator(self)
-    }
-
-    #[cfg(feature = "vanguards")]
-    fn vanguardmgr(&self) -> &Arc<VanguardMgr<R>> {
-        CircuitBuilder::vanguardmgr(self)
     }
 
     fn upgrade_to_owned_state(&self) -> Result<()> {
