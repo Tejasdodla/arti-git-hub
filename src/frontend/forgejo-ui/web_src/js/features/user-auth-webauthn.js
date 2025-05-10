@@ -14,7 +14,7 @@ export async function initUserAuthWebAuthn() {
     return;
   }
 
-  const res = await GET(`${appSubUrl}/user/webauthn/assertion`);
+  const res = await GET(`${appSubUrl}/auth/user/webauthn/assertion`);
   if (res.status !== 200) {
     webAuthnError('unknown');
     return;
@@ -54,7 +54,7 @@ async function verifyAssertion(assertedCredential) {
   const sig = new Uint8Array(assertedCredential.response.signature);
   const userHandle = new Uint8Array(assertedCredential.response.userHandle);
 
-  const res = await POST(`${appSubUrl}/user/webauthn/assertion`, {
+  const res = await POST(`${appSubUrl}/auth/user/webauthn/assertion`, {
     data: {
       id: assertedCredential.id,
       rawId: encodeURLEncodedBase64(rawId),
@@ -85,7 +85,7 @@ async function webauthnRegistered(newCredential) {
   const clientDataJSON = new Uint8Array(newCredential.response.clientDataJSON);
   const rawId = new Uint8Array(newCredential.rawId);
 
-  const res = await POST(`${appSubUrl}/user/settings/security/webauthn/register`, {
+  const res = await POST(`${appSubUrl}/auth/user/settings/security/webauthn/register`, {
     data: {
       id: newCredential.id,
       rawId: encodeURLEncodedBase64(rawId),
@@ -160,7 +160,7 @@ async function webAuthnRegisterRequest() {
   const formData = new FormData();
   formData.append('name', elNickname.value);
 
-  const res = await POST(`${appSubUrl}/user/settings/security/webauthn/request_register`, {
+  const res = await POST(`${appSubUrl}/auth/user/settings/security/webauthn/request_register`, {
     data: formData,
   });
 

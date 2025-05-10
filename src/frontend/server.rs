@@ -8,26 +8,51 @@ use crate::storage::StorageManager;
 use crate::network::NetworkManager;
 use crate::frontend::forgejo_ui::ForgejoUI;
 use crate::frontend::config::FrontendConfig;
+use crate::frontend::api_server::{self, ApiServerConfig}; // Import api_server and its config
 
 /// Start the frontend UI server with the provided configuration
-pub fn start_frontend_with_config(
+pub async fn start_frontend_with_config(
     storage_manager: Arc<StorageManager>,
     network_manager: Arc<NetworkManager>,
     config: &FrontendConfig,
 ) -> Result<(), String> {
     println!("Starting ArtiGit-Hub UI server on {}:{}...", config.bind_address, config.port);
     
-    // Create and start the UI server
-    let ui = ForgejoUI::new(
-        storage_manager,
-        network_manager,
-        &config.repo_base_path,
-        &config.ui_path,
-        config.port
+    // Create the ForgejoBackend instance
+    let backend = Arc::new(
+        crate::frontend::forgejo_backend::ForgejoBackend::new(
+            storage_manager,
+            network_manager,
+            &config.repo_base_path
+        )
     );
     
-    ui.start_server()
-        .map_err(|e| format!("Failed to start UI server: {}", e))
+    // Create the socket address
+    let addr = std::net::SocketAddr::from((
+        config.bind_address.parse::<std::net::IpAddr>()
+            .map_err(|e| format!("Invalid IP address: {}", e))?,
+        config.port
+    ));
+
+    // Create ApiServerConfig (using default for now)
+    let api_server_config = ApiServerConfig::default();
+    println!("API Server Config: {:?}", api_server_config); // For debugging
+
+    // Create the auth API router
+    let auth_api_router_result = api_server::create_api_router(&api_server_config).await;
+    
+    // Create and start the UI server
+    let ui = ForgejoUI::new(backend, config.ui_path.clone())
+        .map_err(|e| format!("Failed to create UI server: {}", e))?;
+    
+    // Pass the auth_api_router to start_server
+    ui.start_server(addr, auth_api_router_result)
+        .map_err(|e| format!("Failed to start UI server: {}", e))?
+        .await // Await the JoinHandle
+        .map_err(|e| format!("UI server execution failed: {}", e))?;
+        
+    // Return success
+    Ok(())
 }
 
 // Removed unused function `start_frontend`

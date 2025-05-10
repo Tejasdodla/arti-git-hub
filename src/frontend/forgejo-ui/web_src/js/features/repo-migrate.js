@@ -13,7 +13,7 @@ export function initRepoMigrationStatusChecker() {
 
   // returns true if the refresh still needs to be called after a while
   const refresh = async () => {
-    const res = await GET(`${appSubUrl}/user/task/${task}`);
+    const res = await GET(`${appSubUrl}/auth/user/task/${task}`);
     if (res.url.endsWith('/login')) return false; // stop refreshing if redirected to login
     if (res.status !== 200) return true; // continue to refresh if network error occurs
 

@@ -1,7 +1,7 @@
 use axum::{ // Removed async_trait, FromRef, State
-    extract::{Json, Request},
-    http::{header, Method, StatusCode},
-    middleware::{self, Next}, // Next is now concrete in Axum 0.7
+    extract::Json, // Remove Request from extract
+    http::{header, Method, Request, StatusCode}, // Import Request from http
+    middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post},
     Router,
@@ -9,21 +9,43 @@ use axum::{ // Removed async_trait, FromRef, State
 use axum_csrf::{CsrfConfig, CsrfLayer, CsrfToken};
 // Removed unused axum_extra::extract::cookie::SameSite
 use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
 use thiserror::Error;
-use tower_cookies::Key as CookieKey; // Only need Key
-use tower_sessions::cookie::SameSite as SessionSameSite;
+// Removed tower_cookies as we're using tower-sessions for cookie management
+use tower_sessions::Session;
 use tower_http::{
     cors::{Any, CorsLayer},
     trace::TraceLayer,
 };
-use tower_sessions::{MemoryStore, Session, SessionManagerLayer}; // Use tower-sessions
+use tower_sessions::{MemoryStore, SessionManagerLayer};
+use tower::ServiceBuilder; // This might still be useful for other layer compositions if needed
+use axum::error_handling::HandleErrorLayer; // Re-adding this
 use tracing::info;
-use rand::{rngs::OsRng, RngCore}; // For secret generation
+use std::error::Error as StdError; // For the boxed error type
+use rand::{rngs::OsRng, RngCore};
 
 // --- Configuration ---
 
+#[derive(Clone, Debug)]
+pub struct ApiServerConfig {
+    // Placeholder for actual config fields
+    // For now, it can be empty or have minimal fields if needed by existing logic
+    // For example, if session_key or csrf_secret were to be part of this config:
+    // pub session_key_hex: String,
+    // pub csrf_secret_hex: String,
+}
+
+impl Default for ApiServerConfig {
+    fn default() -> Self {
+        ApiServerConfig {
+            // Initialize with default values if any
+            // session_key_hex: "".to_string(), // Example
+            // csrf_secret_hex: "".to_string(), // Example
+        }
+    }
+}
+
 // TODO: Load secrets from config/env variables
+#[allow(dead_code)] // TODO: Use for loading secrets from config/env variables
 fn generate_secret() -> Vec<u8> {
     let mut secret = vec![0u8; 64]; // tower-sessions key needs Vec<u8>
     OsRng.fill_bytes(&mut secret);
@@ -36,6 +58,8 @@ fn generate_secret() -> Vec<u8> {
 struct AppState {
     // tower-sessions doesn't require state for the MemoryStore itself
     // axum_csrf config is passed directly to the layer now
+    // We might add ApiServerConfig here if it needs to be part of the state
+    // config: ApiServerConfig,
 }
 
 // --- Session Data ---
@@ -53,9 +77,10 @@ enum ApiError {
     #[error("Authentication required")]
     Unauthorized,
     #[error("CSRF token mismatch")]
+    #[allow(dead_code)] // TODO: Use this variant when CSRF validation fails
     CsrfMismatch,
-    #[error("Session error: {0}")]
-    Session(#[from] tower_sessions::session::Error), // Keep session::Error
+    #[error("Session error")]
+    Session(String),
     #[error("Internal server error: {0}")]
     Internal(#[from] anyhow::Error),
 }
@@ -83,13 +108,19 @@ type ApiResult<T> = Result<T, ApiError>;
 // --- Authentication Middleware ---
 
 // Middleware signature for Axum 0.7
-async fn require_auth( // Removed generic <B>
+// Update signature for from_fn_with_state
+async fn require_auth(
+    axum::extract::State(_state): axum::extract::State<AppState>, // Mark state as unused
     session: Session,
-    request: Request, // Request defaults to Body in Axum 0.7 handlers/middleware
-    next: Next, // Next is concrete, no <B> needed
+    request: Request<axum::body::Body>, // Use http::Request<B>
+    next: Next<axum::body::Body>, // Add body generic for Axum 0.6
 ) -> ApiResult<Response> {
+    // State is available here if needed, even if unused for now
+    // let _ = state; // Indicate state is intentionally unused for now
     // session.get is not async in tower-sessions 0.3
-    let user_session: Option<UserSession> = session.get("user")?; // Remove .await
+    let user_session: Option<UserSession> = session
+        .get("user")
+        .map_err(|_| ApiError::Session("Failed to get session".to_string()))?;
 
     if user_session.as_ref().and_then(|us| us.user_id.as_ref()).is_none() {
         info!("Unauthorized access attempt");
@@ -137,7 +168,9 @@ async fn login_handler(session: Session) -> ApiResult<impl IntoResponse> {
         user_id: Some(user_id),
     };
 
-    session.insert("user", user_session)?; // Remove .await
+    session
+        .insert("user", user_session)
+        .map_err(|_| ApiError::Session("Failed to insert session".to_string()))?;
     info!("User logged in");
     Ok((StatusCode::OK, Json(serde_json::json!({ "message": "Login successful" }))))
 }
@@ -166,34 +199,44 @@ async fn update_user_settings_handler(
     Ok(Json(serde_json::json!({ "message": "Settings updated successfully" })))
 }
 
+// --- Error Handler for Session Layer ---
+// The error type from SessionManagerLayer's service is Box<dyn StdError + Send + Sync + 'static>
+async fn handle_session_layer_error(err: Box<dyn StdError + Send + Sync + 'static>) -> (StatusCode, String) {
+    tracing::error!("Session layer error: {:?}", err);
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        format!("An internal error occurred with the session layer: {}", err),
+    )
+}
+
 // --- Server Setup ---
 
-pub async fn run_api_server(addr: SocketAddr) -> anyhow::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-        .init();
+// Renamed and modified to return a Router
+pub async fn create_api_router(_config: &ApiServerConfig) -> anyhow::Result<Router> {
+    // Initialize tracing (if not already done globally in server.rs)
+    // tracing_subscriber::fmt()
+    //     .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+    //     .try_init().ok(); // Use try_init to avoid panic if already initialized
 
-    // Generate secrets (replace with loading from secure storage)
-    // tower-sessions uses a single key for signing/encryption
-    let session_key = generate_secret();
-    let csrf_secret = generate_secret(); // axum_csrf needs its own secret
+    // Generate secrets (replace with loading from secure storage or ApiServerConfig)
+    // Session key will be automatically generated by tower-sessions
+    // let csrf_secret = generate_secret(); // axum_csrf needs its own secret
 
     // Configure Sessions (tower-sessions)
-    let session_store = MemoryStore::default(); // Use default() for MemoryStore
-    // Configure session key
-    let cookie_key = CookieKey::from(&session_key);
+    let session_store = MemoryStore::default();
     let session_layer = SessionManagerLayer::new(session_store)
-        .with_secure(false) // TODO: Set true if using HTTPS
-        .with_same_site(SessionSameSite::Lax)
-        // Configure signing key directly on session layer
-        .with_private_cookies(cookie_key);
+        // Note: tower-sessions 0.6.0 requires different configuration
+        // Use tower-sessions compatible configuration
+        .with_secure(false); // Set to true in production with HTTPS
 
-    // Configure CSRF (axum-csrf 0.8) - Pass secret to layer constructor
-    let csrf_config = CsrfConfig::default(); // Keep other defaults if needed
-    let csrf_layer = CsrfLayer::new(csrf_config, csrf_secret); // Pass secret here
+    // We'll use tower-sessions for cookie management instead of separate cookie layer
 
-    // Remove explicit CookieManagerLayer - tower-sessions handles its cookies
+    // Configure CSRF protection
+    let csrf_config = CsrfConfig::default()
+        .with_secure(false); // Set to true in production with HTTPS
+    
+    let csrf_layer_protected = CsrfLayer::new(csrf_config.clone());
+    let csrf_layer_main = CsrfLayer::new(csrf_config);
 
     // Configure CORS
     let cors_layer = CorsLayer::new()
@@ -201,58 +244,75 @@ pub async fn run_api_server(addr: SocketAddr) -> anyhow::Result<()> {
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::PATCH, Method::DELETE])
         .allow_headers([header::ACCEPT, header::CONTENT_TYPE, header::AUTHORIZATION, header::HeaderName::from_static("x-csrf-token")]);
 
+    // AppState might now include ApiServerConfig if needed by handlers/middleware
+    let app_state = AppState { /* config: config.clone() */ };
 
-    // Reintroduce AppState, even if empty, for .with_state()
-    let app_state = AppState {};
-
+    // Define protected routes, now prefixed with /auth
     let protected_routes = Router::new()
-        // Add .with_state() here as well, as middleware might need it
         .with_state(app_state.clone())
-        .route("/user/settings", get(get_user_settings_handler))
-        .route("/user/settings/update", post(update_user_settings_handler))
-        // Apply CSRF protection layer TO THIS ROUTER
-        .layer(csrf_layer)
-        // Apply auth middleware TO THIS ROUTER
-        .route_layer(middleware::from_fn(require_auth));
+        .route("/user/settings", get(get_user_settings_handler)) // Will become /auth/user/settings
+        .route("/user/settings/update", post(update_user_settings_handler)) // Will become /auth/user/settings/update
+        .layer(csrf_layer_protected)
+        .route_layer(middleware::from_fn_with_state(app_state.clone(), require_auth));
 
-
-    let app = Router::new()
-        .route("/", get(root_handler))
-        // Public routes
-        .route("/api/csrf-token", get(csrf_token_handler))
-        .route("/api/login", post(login_handler))
-        // Mount protected routes
-        .merge(protected_routes)
-        // Layers applied to *all* routes in order:
-        .layer(TraceLayer::new_for_http()) // 1. Trace
-        .layer(cors_layer)                 // 2. CORS
-        // SessionManagerLayer implicitly handles cookies now
-        .layer(session_layer)              // 3. Session (provides Session extractor context)
-        // Note: CsrfLayer is applied only to protected_routes where needed
-        // Add .with_state() to the main router
+    // Define the main API router, all routes prefixed with /auth
+    let api_router_content = Router::new()
+        // Note: The root_handler for "/" within this router will be /auth/ if this router is mounted at /auth
+        // If a specific /auth route is desired, it should be defined here.
+        // .route("/", get(root_handler)) // This would be /auth/
+        .route("/api/csrf-token", get(csrf_token_handler)) // Becomes /auth/api/csrf-token
+        .route("/api/login", post(login_handler))       // Becomes /auth/api/login
+        .merge(protected_routes) // Merges /user/* routes, which will be /auth/user/*
         .with_state(app_state);
-        // No .with_state needed if AppState is empty
+        
+    // Apply layers to this specific set of API routes
+    let layered_api_content = api_router_content
+        .layer(
+            ServiceBuilder::new()
+                // Order: HandleErrorLayer is outer, session_layer is inner.
+                // Errors from session_layer's service are caught by HandleErrorLayer.
+                .layer(HandleErrorLayer::new(handle_session_layer_error))
+                .layer(session_layer)
+        )
+        .layer(csrf_layer_main)
+        .layer(cors_layer)
+        .layer(TraceLayer::new_for_http()); // Good to have trace layer
 
-    info!("Starting API server on {}", addr);
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    // Use axum::serve for Axum 0.7
-    axum::serve(listener, app.into_make_service()).await?;
+    // The final router to be returned, prefixed with /auth
+    let auth_router = Router::new().nest("/auth", layered_api_content);
+    // Add the root handler at the top level of this auth_router if needed
+    // For example, if you want a response at /auth itself:
+    let auth_router = auth_router.route("/auth", get(root_handler));
 
-    Ok(())
+
+    info!("Auth API router created");
+    Ok(auth_router)
 }
 
 // Example of how to potentially call this from main.rs
 /*
 mod frontend;
+use frontend::api_server::ApiServerConfig; // Import the config
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // ... other setup ...
 
-    // Ensure the frontend module and api_server submodule exist
-    if let Err(e) = frontend::api_server::run_api_server(([127, 0, 0, 1], 3001).into()).await {
-         eprintln!("API Server error: {}", e);
-    }
+    let api_config = ApiServerConfig::default(); // Create a default config
+
+    // This function is no longer run_api_server, but create_api_router
+    // The router would then be merged into a main Axum server instance.
+    // let auth_api_router = frontend::api_server::create_api_router(&api_config).await?;
+    //
+    // Example:
+    // let app = Router::new()
+    //     .merge(other_router)
+    //     .merge(auth_api_router);
+    //
+    // axum::Server::bind(&addr)
+    //     .serve(app.into_make_service())
+    //     .await?;
+
 
     Ok(())
 }

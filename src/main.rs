@@ -77,13 +77,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 storage_arc,
                 network_arc,
                 &frontend_config
-            ).map_err(|e| format!("Failed to start frontend: {}", e))?;
+            ).await.map_err(|e| format!("Failed to start frontend: {}", e))?;
 
             // Start the API server in a separate task
             let api_addr = SocketAddr::from(([127, 0, 0, 1], 3001)); // TODO: Make configurable
             tokio::spawn(async move {
-                if let Err(e) = frontend::api_server::run_api_server(api_addr).await {
-                    eprintln!("API server failed: {}", e);
+                match frontend::api_server::create_api_router(&frontend::api_server::ApiServerConfig::default()).await {
+                    Ok(api_router) => {
+                        if let Err(e) = axum::Server::bind(&api_addr)
+                            .serve(api_router.into_make_service())
+                            .await {
+                            eprintln!("API server failed: {}", e);
+                        }
+                    },
+                    Err(e) => eprintln!("Failed to create API router: {}", e)
                 }
             });
             println!("ArtiGit-Hub API server started on http://{}", api_addr);
@@ -130,13 +137,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 storage_arc,
                 network_arc,
                 &frontend_config
-            ).map_err(|e| format!("Failed to start frontend: {}", e))?;
+            ).await.map_err(|e| format!("Failed to start frontend: {}", e))?;
 
             // Start the API server in a separate task
             let api_addr = SocketAddr::from(([127, 0, 0, 1], 3001)); // TODO: Make configurable
             tokio::spawn(async move {
-                if let Err(e) = frontend::api_server::run_api_server(api_addr).await {
-                    eprintln!("API server failed: {}", e);
+                match frontend::api_server::create_api_router(&frontend::api_server::ApiServerConfig::default()).await {
+                    Ok(api_router) => {
+                        if let Err(e) = axum::Server::bind(&api_addr)
+                            .serve(api_router.into_make_service())
+                            .await {
+                            eprintln!("API server failed: {}", e);
+                        }
+                    },
+                    Err(e) => eprintln!("Failed to create API router: {}", e)
                 }
             });
             println!("ArtiGit-Hub API server started on http://{}", api_addr);

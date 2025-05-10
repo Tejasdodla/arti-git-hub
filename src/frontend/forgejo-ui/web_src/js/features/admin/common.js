@@ -203,7 +203,7 @@ export function initAdminCommon() {
     const authNameEl = document.getElementById('auth_name');
     authNameEl.addEventListener('input', (el) => {
       // appSubUrl is either empty or is a path that starts with `/` and doesn't have a trailing slash.
-      document.getElementById('oauth2-callback-url').textContent = `${window.location.origin}${appSubUrl}/user/oauth2/${encodeURIComponent(el.target.value)}/callback`;
+      document.getElementById('oauth2-callback-url').textContent = `${window.location.origin}${appSubUrl}/auth/user/oauth2/${encodeURIComponent(el.target.value)}/callback`;
     });
     authNameEl.dispatchEvent(new Event('input'));
   }

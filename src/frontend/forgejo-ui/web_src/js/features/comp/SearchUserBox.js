@@ -13,7 +13,7 @@ export function initCompSearchUserBox() {
   $(searchUserBox).search({
     minCharacters: 2,
     apiSettings: {
-      url: `${appSubUrl}/user/search_candidates?q={query}`,
+      url: `${appSubUrl}/auth/user/search_candidates?q={query}`,
       onResponse(response) {
         const resultItems = [];
         const searchQuery = searchUserBox.querySelector('input').value;

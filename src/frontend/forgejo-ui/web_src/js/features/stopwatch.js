@@ -53,7 +53,7 @@ export function initStopwatch() {
     });
     worker.port.postMessage({
       type: 'start',
-      url: `${window.location.origin}${appSubUrl}/user/events`,
+      url: `${window.location.origin}${appSubUrl}/auth/user/events`,
     });
     worker.port.addEventListener('message', (event) => {
       if (!event.data || !event.data.type) {
@@ -113,7 +113,7 @@ async function updateStopwatchWithCallback(callback, timeout) {
 }
 
 async function updateStopwatch() {
-  const response = await GET(`${appSubUrl}/user/stopwatches`);
+  const response = await GET(`${appSubUrl}/auth/user/stopwatches`);
   if (!response.ok) {
     console.error('Failed to fetch stopwatch data');
     return false;

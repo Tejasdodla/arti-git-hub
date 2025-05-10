@@ -76,14 +76,17 @@ tor-guardmgr = { path = "src/network/tor-guardmgr", features = ["vanguards"] }
 tor-netdir = { path = "src/network/tor-netdir", features = ["testing"] }
 
 # Web framework and utilities (Upgraded to Axum 0.7 stack)
-axum = { version = "0.7", features = ["macros"] }
-axum-extra = { version = "0.9", features = ["typed-header", "cookie"] }
-tower-http = { version = "0.5", features = ["fs", "trace", "cors", "compression-full"] }
-tower-cookies = { version = "0.10", features = ["signed"] } # Added 'signed' feature for Key
+axum = { version = "0.6", features = ["macros", "http1", "http2"] } # Downgrade for compatibility
+axum-extra = { version = "0.8", features = ["cookie"] } # Downgrade for compatibility, removed non-existent 'typed-header' feature
+tower-http = { version = "0.4", features = ["fs", "trace", "cors", "compression-full"] } # Downgrade for compatibility
+tower-cookies = { version = "0.10", features = ["signed"] } # Revert for axum 0.6 compatibility
+hyper = { version = "0.14", features = ["full"] } # For HTTP client and server
+bytes = "1.5" # For working with byte streams efficiently
 
 # CSRF and Session Management (Using tower-sessions)
-axum_csrf = { version = "0.8", features = ["layer"] } # Compatible with Axum 0.7
-tower-sessions = { version = "0.3", features = ["memory-store"] } # Replaces axum-sessions
+axum_csrf = { version = "0.8.0", features = ["layer"] } # Revert for axum 0.6 compatibility
+tower-sessions = { version = "0.3", features = ["memory-store"] } # Revert for axum 0.6 compatibility
+tower = "0.4" # Add tower for HandleErrorLayer
 
 # Utilities
 anyhow = "1.0" # Added missing anyhow
@@ -94,6 +97,7 @@ serde_json = "1.0"
 thiserror = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tera = "1.20.0"
 # Patch dependencies to use local copies in src/network
 [patch.crates-io]
 tor-basic-utils = { path = "src/network/tor-basic-utils" }

@@ -73,7 +73,7 @@ export function initNotificationCount() {
     });
     worker.port.postMessage({
       type: 'start',
-      url: `${window.location.origin}${appSubUrl}/user/events`,
+      url: `${window.location.origin}${appSubUrl}/auth/user/events`,
     });
     worker.port.addEventListener('message', (event) => {
       if (!event.data || !event.data.type) {
@@ -169,9 +169,8 @@ async function updateNotificationTable() {
 }
 
 async function updateNotificationCount() {
-  try {
-    const response = await GET(`${appSubUrl}/notifications/new`);
-
+  try {    
+    const response = await GET(`${appSubUrl}/auth/notifications/new`);
     if (!response.ok) {
       throw new Error('Failed to fetch notification count');
     }
